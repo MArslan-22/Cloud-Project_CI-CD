@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
-  CheckCircle2, 
-  XCircle, 
   Loader2, 
   Terminal, 
   Settings, 
   Cloud, 
   GitPullRequest, 
   Github, 
-  Sparkles, 
-  Clock, 
   RefreshCw 
 } from 'lucide-react';
 
