@@ -55,7 +55,7 @@ export default function App() {
 
   // Timer for execution duration
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (pipelineStatus === 'running') {
       interval = setInterval(() => {
         setDuration((prev) => prev + 1);
