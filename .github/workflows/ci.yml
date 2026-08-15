@@ -23,21 +23,16 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        working-directory: './Cloud Projects'
         run: npm install
 
       - name: Verify code formatting (Prettier)
-        working-directory: './Cloud Projects'
         run: npm run format:check
 
       - name: Lint code (ESLint)
-        working-directory: './Cloud Projects'
         run: npm run lint
 
       - name: Run unit tests (Vitest)
-        working-directory: './Cloud Projects'
         run: npm run test
 
       - name: Compile and build production bundle
-        working-directory: './Cloud Projects'
         run: npm run build

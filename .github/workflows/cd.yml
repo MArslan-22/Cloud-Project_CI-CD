@@ -23,28 +23,23 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        working-directory: './Cloud Projects'
         run: npm install
 
       - name: Verify code formatting
-        working-directory: './Cloud Projects'
         run: npm run format:check
 
       - name: Lint code
-        working-directory: './Cloud Projects'
         run: npm run lint
 
       - name: Run unit tests
-        working-directory: './Cloud Projects'
         run: npm run test
 
       - name: Build production bundle
-        working-directory: './Cloud Projects'
         run: npm run build
 
       - name: Deploy to GitHub Pages 🚀
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: 'Cloud Projects/dist'
+          folder: 'dist'
           branch: gh-pages
           clean: true
