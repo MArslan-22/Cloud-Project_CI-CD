@@ -55,7 +55,7 @@ export default function App() {
 
   // Timer for execution duration
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (pipelineStatus === 'running') {
       interval = setInterval(() => {
         setDuration((prev) => prev + 1);
