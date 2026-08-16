@@ -24,5 +24,8 @@ This file tracks the development and deployment progress of the Cloud Projects C
 - Refactored workflow files (.github/workflows/ci.yml and .github/workflows/cd.yml) to target the root directory checkouts on GitHub Actions runners.
 - Fixed an ESLint warning regarding explicit `any` and mocked `scrollIntoView` for Vitest jsdom unit testing.
 - Verified that the GitHub Actions build completed successfully, and deployed the production package to the `gh-pages` branch!
-
-
+### 2026-08-16 17:29 - Transition and Deployment to Azure Static Website
+- Provisioned Azure Resource Group (rg-cloud-projects-cicd) and Storage Account (stcloudcicd4quqqh) with static website hosting enabled using Terraform (Standard LRS testing SKU to minimize cost).
+- Generated an Azure Service Principal credentials JSON and configured it as AZURE_CREDENTIALS in GitHub Actions secrets.
+- Updated the CD pipeline (cd.yml) to deploy the built bundle directly to the Azure Storage $web container.
+- Verified that the GitHub Actions run completed successfully, and the live application is reachable at: https://stcloudcicd4quqqh.z13.web.core.windows.net/
