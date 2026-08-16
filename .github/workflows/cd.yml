@@ -36,9 +36,13 @@ jobs:
       - name: Build production bundle
         run: npm run build
 
-      - name: Deploy to GitHub Pages 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Log in to Azure
+        uses: azure/login@v2
         with:
-          folder: 'dist'
-          branch: gh-pages
-          clean: true
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Blob Storage 🚀
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az storage blob upload-batch --overwrite -s dist -d '$web' --account-name stcloudcicd4quqqh
