@@ -134,7 +134,7 @@ terraform apply -auto-approve
 ### Step 2: Generate Service Principal for GitHub Actions
 Run this command in your Azure-authenticated local terminal:
 ```bash
-az ad sp create-for-rbac --name "sp-cloud-projects-cicd" --role contributor --scopes /subscriptions/0bd0cf91-5292-40df-b65c-5b4c9c745317/resourceGroups/rg-cloud-projects-cicd --sdk-auth
+az ad sp create-for-rbac --name "sp-cloud-projects-cicd" --role contributor --scopes /subscriptions/<YOUR-SUBSCRIPTION-ID>/resourceGroups/rg-cloud-projects-cicd --sdk-auth
 ```
 1. Copy the JSON output block.
 2. In your GitHub repository, go to **Settings > Secrets and variables > Actions**.
