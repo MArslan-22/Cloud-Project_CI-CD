@@ -47,16 +47,19 @@ The project has the following directory structure:
 Cloud Projects/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml            # CI validation workflow (format, lint, test, compile)
-│       └── cd.yml            # CD deployment workflow (verification + deployment)
+│       ├── ci.yml            # CI validation workflow (lint, test, compile)
+│       └── cd.yml            # CD deployment workflow (verification + Azure deployment)
 ├── src/
 │   ├── test/
-│   │   └── setup.ts          # Vitest testing environment setup
+│   │   └── setup.ts          # Vitest testing environment setup & scroll mock
 │   ├── App.tsx               # Main Dashboard application (Pipeline Simulator)
 │   ├── App.test.tsx          # Vitest Unit Tests
 │   ├── index.css             # Vanilla CSS Custom Design System
 │   ├── main.tsx              # React bootstrap script
 │   └── vite-env.d.ts         # TypeScript environment declarations
+├── terraform/                # Infrastructure as Code (Azure)
+│   ├── main.tf               # Storage account & resource group definitions
+│   └── outputs.tf            # Exports web URLs and account properties
 ├── .gitignore                # Node.js specific ignore file
 ├── .prettierrc               # Prettier format rules
 ├── eslint.config.js          # ESLint flat config file
@@ -71,29 +74,29 @@ Cloud Projects/
 ## Pipeline Workflow Details
 
 ### 1. Continuous Integration (CI) — `ci.yml`
-* **Trigger**: Triggers on pull requests to the `main` branch or pushes to feature/development branches (ignoring `main`).
+* **Trigger**: Triggers on pull requests to the `main` branch or pushes to feature branches.
 * **Environment**: Runs on `ubuntu-latest`.
 * **Steps**:
   1. **Checkout**: Checks out the repository files.
-  2. **Set up Node.js**: Installs Node v20 and configures package-level caching for fast npm installs.
-  3. **Install Dependencies**: Runs `npm ci` to cleanly install dependencies from `package-lock.json`.
-  4. **Prettier Format Check**: Runs `npm run format:check` to verify that all code matches styling guidelines.
-  5. **ESLint Lint**: Runs `npm run lint` with a strict `max-warnings 0` rule to prevent static analysis errors.
-  6. **Unit Testing**: Runs Vitest test suites using `npm run test`.
-  7. **Build Compilation**: Compiles code using `tsc` and Vite to guarantee zero-defect deployment packaging.
+  2. **Set up Node.js**: Installs Node v22.
+  3. **Install Dependencies**: Runs `npm install`.
+  4. **Lint code (ESLint)**: Runs `npm run lint`.
+  5. **Unit Testing**: Runs Vitest test suites.
+  6. **Build**: Compiles code using `tsc` and Vite.
 
 ### 2. Continuous Deployment (CD) — `cd.yml`
-* **Trigger**: Triggers on merges or direct pushes to the `main` branch.
+* **Trigger**: Triggers on merges or direct pushes to `main`.
 * **Environment**: Runs on `ubuntu-latest`.
 * **Steps**:
   * Inherits all verification checks (install, lint, test, build).
-  * **GitHub Pages Deploy**: Utilizes the standard `JamesIves/github-pages-deploy-action@v4` to publish the built directory `Cloud Projects/dist` directly to the `gh-pages` branch of the hosting repository.
+  * **Azure Authentication**: Logs in using `azure/login` with your SP credential secret.
+  * **Azure Storage Sync**: Uses `azure/CLI` to synchronize the compiled `/dist` directory to the `$web` storage container.
 
 ---
 
 ## Local Development & Installation
 
-Ensure you have [Node.js (v18+)](https://nodejs.org) installed on your system.
+Ensure you have [Node.js (v18+)](https://nodejs.org) installed.
 
 1. **Install Dependencies**:
    ```bash
@@ -104,78 +107,54 @@ Ensure you have [Node.js (v18+)](https://nodejs.org) installed on your system.
    ```bash
    npm run dev
    ```
-   *Starts the app on `http://localhost:5173/`.*
 
-3. **Run Code Formatter**:
-   ```bash
-   npm run format
-   ```
-
-4. **Run Linter**:
+3. **Run Linting**:
    ```bash
    npm run lint
    ```
 
-5. **Run Unit Tests**:
+4. **Run Unit Tests**:
    ```bash
    npm run test
    ```
 
-6. **Create Build Bundle**:
-   ```bash
-   npm run build
-   ```
+---
+
+## Step-by-Step Azure & GitHub Setup Instructions
+
+### Step 1: Provision Azure Resources via Terraform
+Configure the cloud hosting infrastructure:
+```bash
+cd terraform
+terraform init
+terraform apply -auto-approve
+```
+*This outputs the storage account name and the primary website URL.*
+
+### Step 2: Generate Service Principal for GitHub Actions
+Run this command in your Azure-authenticated local terminal:
+```bash
+az ad sp create-for-rbac --name "sp-cloud-projects-cicd" --role contributor --scopes /subscriptions/0bd0cf91-5292-40df-b65c-5b4c9c745317/resourceGroups/rg-cloud-projects-cicd --sdk-auth
+```
+1. Copy the JSON output block.
+2. In your GitHub repository, go to **Settings > Secrets and variables > Actions**.
+3. Create a new repository secret named **`AZURE_CREDENTIALS`** and paste the JSON block as the secret value.
+
+### Step 3: Trigger the Pipeline
+Push your changes to the main branch:
+```bash
+git add .
+git commit -m "feat: setup azure static web hosting deployment pipeline"
+git push origin main
+```
+*GitHub Actions will build, test, and deploy the application automatically to the Azure Storage web endpoint!*
 
 ---
 
-## Step-by-Step GitHub Setup Instructions
+## Teardown (Infrastructure Deletion)
 
-Follow these steps to deploy your repository and pipeline live to GitHub:
-
-### Step 1: Create a GitHub Repository
-1. Log in to [GitHub](https://github.com).
-2. Create a new repository (do not add a README or `.gitignore` since they are already configured in this folder).
-
-### Step 2: Initialize Git and Push to GitHub
-Open your terminal in the workspace root and run the following command sequence:
-
+To completely delete the Azure resources and guarantee zero ongoing cost, run:
 ```bash
-# Move to the project folder
-cd "Cloud Projects"
-
-# Initialize local git repository
-git init
-
-# Add all files
-git add .
-
-# Create initial commit
-git commit -m "feat: init vite react app with GitHub Actions CI/CD"
-
-# Rename default branch to main
-git branch -M main
-
-# Link your local repository to your remote GitHub repository
-git remote add origin https://github.com/<YOUR-USERNAME>/<YOUR-REPO-NAME>.git
-
-# Push changes to the main branch
-git push -u origin main
+az group delete --name rg-cloud-projects-cicd --yes --no-wait
 ```
 
-### Step 3: Configure GitHub Pages Settings
-1. On your GitHub repository page, navigate to **Settings** > **Pages** (in the sidebar).
-2. Under **Build and deployment** > **Source**, verify it is set to **Deploy from a branch**.
-3. Under **Branch**, select **`gh-pages`** and folder **`/ (root)`**.
-4. Click **Save**.
-5. Once the GitHub Actions deploy job completes, your live dashboard link will be displayed at the top of the Pages section!
-
-### Step 4: Test a Feature Pull Request
-To see the CI pipeline in action, create a new branch:
-```bash
-git checkout -b feature/new-component
-# (Make some code edits)
-git add .
-git commit -m "feat: added new component"
-git push origin feature/new-component
-```
-Create a Pull Request in GitHub, and you'll see the **Lint, Test, and Build** validation checks run automatically!
